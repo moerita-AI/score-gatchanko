@@ -7,15 +7,31 @@ import type { PDFDocumentProxy } from "pdfjs-dist";
 
 type Item = { id:string; kind:"image"|"pdf"; file:File; name:string; thumb:string; page?:number; pdf?:PDFDocumentProxy };
 type Result = { name:string; blob:Blob; url:string; width:number; height:number; count:number };
-const TYPES=["png","jpg","jpeg","webp","pdf"], MAX_FILE=200*1024*1024, MAX_PIXELS=150_000_000, MAX_SIDE=32000;
+const MAX_FILE=200*1024*1024, MAX_PIXELS=150_000_000, MAX_SIDE=32000;
 class TooLarge extends Error {}
 
 async function pdfLib(){
-  const lib=await import("pdfjs-dist");
-  lib.GlobalWorkerOptions.workerSrc=new URL("pdfjs-dist/build/pdf.worker.min.mjs",import.meta.url).toString();
+  // 互換版を使うと、少し古いiPhone/AndroidでもPDF.jsが動作します。
+  const lib=await import("pdfjs-dist/legacy/build/pdf.mjs");
+  // ワーカーも互換版を同梱し、外部CDNへは接続しません。
+  lib.GlobalWorkerOptions.workerSrc=new URL("pdfjs-dist/legacy/build/pdf.worker.min.mjs",import.meta.url).toString();
   return lib;
 }
 const ext=(name:string)=>name.split(".").pop()?.toLowerCase()||"";
+async function fileKind(file:File):Promise<"pdf"|"image"|null>{
+  const e=ext(file.name),mime=file.type.toLowerCase();
+  if(e==="pdf"||mime==="application/pdf"||mime==="application/x-pdf")return "pdf";
+  if(["png","jpg","jpeg","webp"].includes(e)||["image/png","image/jpeg","image/webp"].includes(mime))return "image";
+  // スマホの「ファイル」アプリは種類や拡張子を渡さない場合があるため、PDFの先頭記号も確認します。
+  try{const head=new Uint8Array(await file.slice(0,5).arrayBuffer());if(String.fromCharCode(...head)==="%PDF-")return "pdf"}catch{}
+  return null;
+}
+function pdfError(file:File,error:unknown){
+  const name=error instanceof Error?error.name:"";
+  if(name==="PasswordException")return `「${file.name}」はパスワードで保護されているため読み込めません。`;
+  if(name==="InvalidPDFException")return `「${file.name}」は壊れているか、PDFとして認識できませんでした。`;
+  return `「${file.name}」のPDFを読み込めませんでした。別のPDFでもう一度お試しください。`;
+}
 const id=()=>`${Date.now()}-${crypto.randomUUID()}`;
 const canvas=(w:number,h:number)=>{const c=document.createElement("canvas");c.width=Math.max(1,Math.ceil(w));c.height=Math.max(1,Math.ceil(h));return c};
 const toBlob=(c:HTMLCanvasElement,type="image/png",quality?:number)=>new Promise<Blob>((ok,no)=>c.toBlob(b=>b?ok(b):no(new TooLarge()),type,quality));
@@ -44,8 +60,8 @@ export default function Home(){
 
   async function add(filesLike:FileList|File[]){
     const files=Array.from(filesLike);if(!files.length||busy)return;setBusy(true);setError("");setStatus("読み込み中…");clearResults();const added:Item[]=[],problems:string[]=[];
-    for(const file of files){const e=ext(file.name);if(!TYPES.includes(e)){problems.push(`「${file.name}」は対応していない形式です。`);continue}if(file.size>MAX_FILE){problems.push(`「${file.name}」は大きすぎます（上限200MB）。`);continue}
-      if(e==="pdf"){let pdf:PDFDocumentProxy|undefined;const pages:Item[]=[];try{pdf=await(await pdfLib()).getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;for(let n=1;n<=pdf.numPages;n++){setStatus(`読み込み中… ${file.name} ${n}/${pdf.numPages}ページ`);pages.push({id:id(),kind:"pdf",file,name:file.name,page:n,pdf,thumb:await pdfThumb(pdf,n)})}added.push(...pages)}catch{pages.forEach(x=>URL.revokeObjectURL(x.thumb));await pdf?.destroy();problems.push(`「${file.name}」のPDFを読み込めませんでした。`)}}
+    for(const file of files){const kind=await fileKind(file);if(!kind){problems.push(`「${file.name}」は対応していない形式です。`);continue}if(file.size>MAX_FILE){problems.push(`「${file.name}」は大きすぎます（上限200MB）。`);continue}
+      if(kind==="pdf"){let pdf:PDFDocumentProxy|undefined;const pages:Item[]=[];try{pdf=await(await pdfLib()).getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;for(let n=1;n<=pdf.numPages;n++){setStatus(`読み込み中… ${file.name} ${n}/${pdf.numPages}ページ`);pages.push({id:id(),kind:"pdf",file,name:file.name,page:n,pdf,thumb:await pdfThumb(pdf,n)})}added.push(...pages)}catch(error){pages.forEach(x=>URL.revokeObjectURL(x.thumb));await pdf?.destroy();problems.push(pdfError(file,error))}}
       else try{added.push({id:id(),kind:"image",file,name:file.name,thumb:await imageThumb(file)})}catch(e){problems.push(e instanceof TooLarge?`「${file.name}」は画像サイズが大きすぎます。`:`「${file.name}」の画像を読み込めませんでした。`)}}
     if(added.length)setItems(v=>[...v,...added]);setError(problems.join("\n"));setStatus(added.length?`${added.length}枚を追加しました`:"");setBusy(false);
   }
