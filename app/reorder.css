@@ -1,0 +1,118 @@
+/*
+ * 並び順は画面幅にかかわらず1列に固定します。
+ * 1枚が必ず1行になるため、矢印を押したときの入れ替わりが明確です。
+ */
+.thumbs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.thumbs article {
+  display: grid;
+  grid-template-columns: 116px minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 7px 14px;
+  min-height: 112px;
+  padding: 10px 44px 10px 10px;
+}
+
+.thumbs img {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  width: 116px;
+  height: 90px;
+}
+
+.thumbs article > div {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.handle {
+  grid-column: 3;
+  grid-row: 1 / 3;
+  align-self: stretch;
+  width: 38px;
+  height: auto;
+  min-height: 44px;
+}
+
+.thumbs nav {
+  grid-column: 2;
+  grid-row: 2;
+  display: flex;
+  gap: 7px;
+}
+
+.thumbs nav button {
+  flex: 0 1 110px;
+  min-height: 34px;
+  padding: 5px 10px;
+  color: var(--navy);
+  font-size: 10px;
+}
+
+.thumbs .remove {
+  top: 9px;
+  right: 9px;
+}
+
+@media (max-width: 700px) {
+  .thumbs {
+    grid-template-columns: none;
+  }
+
+  .thumbs article {
+    grid-template-columns: 86px minmax(0, 1fr) auto;
+    gap: 6px 10px;
+    min-height: 100px;
+    padding: 9px 40px 9px 9px;
+  }
+
+  .thumbs img {
+    width: 86px;
+    height: 78px;
+  }
+
+  .thumbs nav {
+    display: flex;
+  }
+
+  .thumbs nav button {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .handle {
+    width: 35px;
+  }
+}
+
+@media (max-width: 420px) {
+  .thumbs {
+    grid-template-columns: none;
+  }
+
+  .thumbs article {
+    grid-template-columns: 74px minmax(0, 1fr) auto;
+    gap: 5px 8px;
+    min-height: 92px;
+    padding: 8px 37px 8px 8px;
+  }
+
+  .thumbs img {
+    width: 74px;
+    height: 70px;
+  }
+
+  .handle {
+    width: 32px;
+  }
+
+  .thumbs nav button {
+    padding: 5px 4px;
+    font-size: 9px;
+  }
+}

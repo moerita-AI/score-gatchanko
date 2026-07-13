@@ -38,3 +38,16 @@ test("スマホ向けのPDF互換処理を同梱する", async () => {
   assert.match(page, /PasswordException/);
   assert.doesNotMatch(page, /cdnjs|unpkg|jsdelivr/i);
 });
+
+test("並び順を1列で表示し、矢印は隣の1件だけを動かす", async () => {
+  const [page, css] = await Promise.all([
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/reorder.css", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(css, /\.thumbs\s*\{[\s\S]*display:\s*flex;[\s\S]*flex-direction:\s*column/);
+  assert.match(page, /function moveStep\(target:string,direction:-1\|1\)/);
+  assert.match(page, /↑ 上へ/);
+  assert.match(page, /↓ 下へ/);
+  assert.match(page, /上から順に、結合時は左から右へ配置します/);
+});
