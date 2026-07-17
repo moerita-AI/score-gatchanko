@@ -2,6 +2,10 @@
 
 画像やPDFの楽譜をブラウザ上で並べ替え、横につないで保存できるWebアプリです。
 
+## 公開サイト
+
+[楽譜がっちゃんこを使う](https://moerita-ai.github.io/score-gatchanko/)
+
 ## 主な機能
 
 - 画像・PDFの読み込み
