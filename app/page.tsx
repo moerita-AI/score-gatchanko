@@ -93,7 +93,20 @@ export default function Home(){
     <Card n="4" title="プレビューと保存" sub="表示だけ縮小しています。保存時は元の解像度です">
       {results.length?<><div className="tabs">{results.map((_,i)=><button className={tab===i?"on":""} onClick={()=>setTab(i)} key={i}>出力{i+1}</button>)}</div><div className="preview"><img src={results[tab].url} alt={`出力${tab+1}の結合結果`}/></div><div className="meta"><b>出力{tab+1}</b><span>{results[tab].count}枚を結合</span><span>{results[tab].width.toLocaleString()} × {results[tab].height.toLocaleString()} px</span></div><div className="downloads">{format==="png"?<><button onClick={()=>save(results[tab].blob,results[tab].name)}>表示中のPNGを保存</button>{results.length>1&&<button className="outline" onClick={()=>void zip()}>すべてZIPで保存</button>}<div>{results.map((x,i)=><button key={i} onClick={()=>save(x.blob,x.name)}>出力{i+1}を保存</button>)}</div></>:<button onClick={()=>void pdf()}>combined_score.pdf を保存</button>}</div></>:<Empty text="結合結果を作成すると、ここで確認できます"/>}
     </Card>
-    <button className="reset" disabled={busy} onClick={reset}>すべてリセット</button><footer>✓ 端末内だけで処理　　✓ サーバーへの送信なし　　✓ 無料で利用できます</footer>
+    <button className="reset" disabled={busy} onClick={reset}>すべてリセット</button>
+    <aside className="stamp-ad" aria-label="LINEスタンプのお知らせ">
+      <div className="stamp-image"><img src="line-stamp-main.png" alt="ありがトロンボーンと書かれた、トロンボーンを吹く猫のLINEスタンプ"/></div>
+      <div className="stamp-copy">
+        <small>POPULAR LINE STICKERS</small>
+        <h2>人気のLINEスタンプ</h2>
+        <p>音楽好きに。楽器ダジャレのスタンプです。</p>
+        <nav aria-label="LINEスタンプへのリンク">
+          <a className="stamp-main-link" href="https://store.line.me/stickershop/product/34086936/ja" target="_blank" rel="noopener noreferrer">このスタンプを見る</a>
+          <a className="stamp-all-link" href="https://store.line.me/stickershop/author/5046622/ja" target="_blank" rel="noopener noreferrer">ほかの作品も見る →</a>
+        </nav>
+      </div>
+    </aside>
+    <footer>✓ 端末内だけで処理　　✓ サーバーへの送信なし　　✓ 無料で利用できます</footer>
   </main>
 }
 function Card({n,title,sub,badge,children}:{n:string;title:string;sub:string;badge?:string;children:React.ReactNode}){return <section className="card"><div className="heading"><b>{n}</b><div><h2>{title}</h2><p>{sub}</p></div>{badge&&<em>{badge}</em>}</div>{children}</section>}
